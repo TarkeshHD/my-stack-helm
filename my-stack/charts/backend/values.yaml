@@ -1,41 +1,36 @@
 # Default values for backend.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 
-# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+# ------------------------------------------------------------------------------------
+# Replica settings
+# ------------------------------------------------------------------------------------
 replicaCount: 1
 
-# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+# ------------------------------------------------------------------------------------
+# Image
+# ------------------------------------------------------------------------------------
 image:
-  repository: nginx
-  # This sets the pull policy for images.
+  # TODO: replace with your pushed image (e.g. ghcr.io/TarkeshHD/backend-automation)
+  repository: backend-automation
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: "latest"
 
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
-# This is to override the chart name.
 nameOverride: ""
 fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+# ------------------------------------------------------------------------------------
+# Service Account
+# ------------------------------------------------------------------------------------
 serviceAccount:
-  # Specifies whether a service account should be created
   create: true
-  # Automatically mount a ServiceAccount's API credentials?
   automount: true
-  # Annotations to add to the service account
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+# ------------------------------------------------------------------------------------
+# Pod labels/annotations & security
+# ------------------------------------------------------------------------------------
 podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
 
 podSecurityContext: {}
@@ -43,81 +38,156 @@ podSecurityContext: {}
 
 securityContext: {}
   # capabilities:
-  #   drop:
-  #   - ALL
+  #   drop: [ "ALL" ]
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
 
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
-service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 80
+# ------------------------------------------------------------------------------------
+# Networking
+# ------------------------------------------------------------------------------------
+# Container port your app listens on. Your Deployment template should name this port "http".
+containerPort: 8080
 
-# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+service:
+  type: ClusterIP
+  annotations: {}
+  port: 8080        # Service port exposed inside the cluster
+  # targetPort should map to the named port in the container spec (http)
+  targetPort: http
+
 ingress:
   enabled: false
   className: ""
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
   hosts:
     - host: chart-example.local
       paths:
         - path: /
-          pathType: ImplementationSpecific
+          pathType: Prefix
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
 
+# ------------------------------------------------------------------------------------
+# Resources
+# ------------------------------------------------------------------------------------
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+  #   cpu: 500m
+  #   memory: 512Mi
   # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  #   cpu: 200m
+  #   memory: 256Mi
 
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# ------------------------------------------------------------------------------------
+# Probes (make sure your Deployment wires these via toYaml)
+# ------------------------------------------------------------------------------------
 livenessProbe:
   httpGet:
-    path: /
+    path: /health
     port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+  successThreshold: 1
+
 readinessProbe:
   httpGet:
-    path: /
+    path: /ready
     port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+  successThreshold: 1
 
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+# ------------------------------------------------------------------------------------
+# Autoscaling (HPA v2)
+# ------------------------------------------------------------------------------------
 autoscaling:
   enabled: false
   minReplicas: 1
-  maxReplicas: 100
+  maxReplicas: 10
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
+  # Optional behavior block (if your HPA template supports it)
+  # behavior:
+  #   scaleUp:
+  #     stabilizationWindowSeconds: 0
+  #     policies:
+  #       - type: Percent
+  #         value: 100
+  #         periodSeconds: 60
+  #   scaleDown:
+  #     stabilizationWindowSeconds: 300
+  #     policies:
+  #       - type: Percent
+  #         value: 50
+  #         periodSeconds: 60
 
-# Additional volumes on the output Deployment definition.
+# ------------------------------------------------------------------------------------
+# Environment & args (wire these in your Deployment with toYaml)
+# ------------------------------------------------------------------------------------
+env: []
+  # - name: NODE_ENV
+  #   value: "production"
+  # - name: MONGODB_URI
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: mongodb-conn
+  #       key: uri
+
+envFrom: []
+  # - secretRef:
+  #     name: backend-secrets
+  # - configMapRef:
+  #     name: backend-config
+
+args: []
+  # - "--log-level=info"
+
+# ------------------------------------------------------------------------------------
+# Volumes & mounts
+# ------------------------------------------------------------------------------------
 volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+  # - name: app-config
+  #   configMap:
+  #     name: backend-config
 
-# Additional volumeMounts on the output Deployment definition.
 volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
+  # - name: app-config
+  #   mountPath: /app/config
+  #   readOnly: true
 
+# ------------------------------------------------------------------------------------
+# Scheduling
+# ------------------------------------------------------------------------------------
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
+
+topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: "topology.kubernetes.io/zone"
+  #   whenUnsatisfiable: "ScheduleAnyway"
+  #   labelSelector: {}
+
+# ------------------------------------------------------------------------------------
+# Pod Disruption Budget (optional; add a template if you want to use this)
+# ------------------------------------------------------------------------------------
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# ------------------------------------------------------------------------------------
+# Update strategy (if your Deployment template supports it)
+# ------------------------------------------------------------------------------------
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 25%
