@@ -1,35 +1,25 @@
 # Default values for backend.
 
-# ------------------------------------------------------------------------------------
-# Replica settings
-# ------------------------------------------------------------------------------------
 replicaCount: 1
 
-# ------------------------------------------------------------------------------------
-# Image
-# ------------------------------------------------------------------------------------
 image:
-  # TODO: replace with your pushed image (e.g. ghcr.io/TarkeshHD/backend-automation)
-  repository: backend-automation
+  # Change this to your backend image (e.g., ghcr.io/your-org/backend-automation)
+  repository: nginx
   pullPolicy: IfNotPresent
-  tag: "latest"
+  # If empty, Helm uses .Chart.AppVersion
+  tag: ""
 
+# Add secret names here if you pull from a private registry
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-# ------------------------------------------------------------------------------------
-# Service Account
-# ------------------------------------------------------------------------------------
 serviceAccount:
   create: true
   automount: true
   annotations: {}
   name: ""
 
-# ------------------------------------------------------------------------------------
-# Pod labels/annotations & security
-# ------------------------------------------------------------------------------------
 podAnnotations: {}
 podLabels: {}
 
@@ -43,18 +33,9 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-# ------------------------------------------------------------------------------------
-# Networking
-# ------------------------------------------------------------------------------------
-# Container port your app listens on. Your Deployment template should name this port "http".
-containerPort: 8080
-
 service:
   type: ClusterIP
-  annotations: {}
-  port: 8080        # Service port exposed inside the cluster
-  # targetPort should map to the named port in the container spec (http)
-  targetPort: http
+  port: 8080
 
 ingress:
   enabled: false
@@ -66,54 +47,46 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  # - secretName: chart-example-tls
+  #   hosts:
+  #     - chart-example.local
 
-# ------------------------------------------------------------------------------------
-# Resources
-# ------------------------------------------------------------------------------------
 resources: {}
   # limits:
   #   cpu: 500m
   #   memory: 512Mi
   # requests:
-  #   cpu: 200m
-  #   memory: 256Mi
+  #   cpu: 100m
+  #   memory: 128Mi
 
-# ------------------------------------------------------------------------------------
-# Probes (make sure your Deployment wires these via toYaml)
-# ------------------------------------------------------------------------------------
+# Probes (tweak path/ports as needed)
 livenessProbe:
   httpGet:
-    path: /health
+    path: /
     port: http
   initialDelaySeconds: 10
   periodSeconds: 10
   timeoutSeconds: 2
   failureThreshold: 3
-  successThreshold: 1
 
 readinessProbe:
   httpGet:
-    path: /ready
+    path: /
     port: http
   initialDelaySeconds: 5
   periodSeconds: 10
   timeoutSeconds: 2
   failureThreshold: 3
-  successThreshold: 1
 
-# ------------------------------------------------------------------------------------
-# Autoscaling (HPA v2)
-# ------------------------------------------------------------------------------------
+# Horizontal Pod Autoscaler (autoscaling/v2)
 autoscaling:
   enabled: false
   minReplicas: 1
-  maxReplicas: 10
+  maxReplicas: 100
+  # Set either/both. If neither is set, your HPA template should fall back (e.g., CPU 80%).
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
-  # Optional behavior block (if your HPA template supports it)
+  # Optional v2 behavior block
   # behavior:
   #   scaleUp:
   #     stabilizationWindowSeconds: 0
@@ -128,66 +101,28 @@ autoscaling:
   #         value: 50
   #         periodSeconds: 60
 
-# ------------------------------------------------------------------------------------
-# Environment & args (wire these in your Deployment with toYaml)
-# ------------------------------------------------------------------------------------
-env: []
-  # - name: NODE_ENV
-  #   value: "production"
-  # - name: MONGODB_URI
-  #   valueFrom:
-  #     secretKeyRef:
-  #       name: mongodb-conn
-  #       key: uri
-
-envFrom: []
-  # - secretRef:
-  #     name: backend-secrets
-  # - configMapRef:
-  #     name: backend-config
-
-args: []
-  # - "--log-level=info"
-
-# ------------------------------------------------------------------------------------
-# Volumes & mounts
-# ------------------------------------------------------------------------------------
+# Extra volumes / mounts
 volumes: []
-  # - name: app-config
-  #   configMap:
-  #     name: backend-config
+# - name: app-config
+#   configMap:
+#     name: backend-config
 
 volumeMounts: []
-  # - name: app-config
-  #   mountPath: /app/config
-  #   readOnly: true
+# - name: app-config
+#   mountPath: /app/config
+#   readOnly: true
 
-# ------------------------------------------------------------------------------------
-# Scheduling
-# ------------------------------------------------------------------------------------
+# Optional env / envFrom patterns your Deployment template can consume
+env: []
+# - name: NODE_ENV
+#   value: "production"
+
+envFrom: []
+# - secretRef:
+#     name: backend-secrets
+# - configMapRef:
+#     name: backend-config
+
 nodeSelector: {}
 tolerations: []
 affinity: {}
-
-topologySpreadConstraints: []
-  # - maxSkew: 1
-  #   topologyKey: "topology.kubernetes.io/zone"
-  #   whenUnsatisfiable: "ScheduleAnyway"
-  #   labelSelector: {}
-
-# ------------------------------------------------------------------------------------
-# Pod Disruption Budget (optional; add a template if you want to use this)
-# ------------------------------------------------------------------------------------
-podDisruptionBudget:
-  enabled: false
-  minAvailable: 1
-  # maxUnavailable: 1
-
-# ------------------------------------------------------------------------------------
-# Update strategy (if your Deployment template supports it)
-# ------------------------------------------------------------------------------------
-strategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 0
-    maxSurge: 25%
