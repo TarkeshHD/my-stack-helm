@@ -9,6 +9,15 @@ service:
 containerPort: 80
 resources: {}
 env: []
+
+# NEW: ConfigMap settings
+config:
+  enabled: true
+  data: {}       # e.g., { VITE_API_BASE: "https://my-stack.127.0.0.1.nip.io/api" }
+  files: {}      # e.g., { nginx.conf: |-
+                 #         server { listen 80; root /usr/share/nginx/html; location / { try_files $uri /index.html; } } }
+
+# optional SA bits (unchanged)
 serviceAccount:
   create: false
   automount: false
