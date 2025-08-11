@@ -1,8 +1,8 @@
-{{- if and .Values.autoscaling.enabled (or .Values.autoscaling.targetCPUUtilizationPercentage .Values.autoscaling.targetMemoryUtilizationPercentage) }}
+{{- if .Values.autoscaling.enabled }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "backend.fullname" . }}-hpa
+  name: {{ include "backend.fullname" . }}
   labels:
     {{- include "backend.labels" . | nindent 4 }}
 spec:
@@ -10,25 +10,29 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "backend.fullname" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas | default 1 }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas | default 5 }}
+  minReplicas: {{ default 1 .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ default 3 .Values.autoscaling.maxReplicas }}
+  {{- $cpu := .Values.autoscaling.targetCPUUtilizationPercentage -}}
+  {{- $mem := .Values.autoscaling.targetMemoryUtilizationPercentage -}}
+  {{- if or $cpu $mem }}
   metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- if $cpu }}
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+          averageUtilization: {{ $cpu }}
     {{- end }}
-    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- if $mem }}
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+          averageUtilization: {{ $mem }}
     {{- end }}
+  {{- end }}
   {{- with .Values.autoscaling.behavior }}
   behavior:
     {{- toYaml . | nindent 4 }}
