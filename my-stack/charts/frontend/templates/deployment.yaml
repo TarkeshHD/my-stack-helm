@@ -11,11 +11,13 @@ spec:
     metadata:
       labels: {{- include "frontend.labels" . | nindent 8 }}
     spec:
-      {{- with $.Values.global.imagePullSecrets }}
+      {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        {{- range . }}- name: {{ . }}
+        {{- range . }}
+        - name: {{ . }}
         {{- end }}
       {{- end }}
+      serviceAccountName: {{- if .Values.serviceAccount.create }} {{ include "frontend.serviceAccountName" . }} {{- else }} default {{- end }}
       containers:
         - name: frontend
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -26,5 +28,22 @@ spec:
           env:
             {{- toYaml .Values.env | nindent 12 }}
           {{- end }}
+          {{- if and .Values.config.enabled .Values.config.data }}
+          envFrom:
+            - configMapRef:
+                name: {{ printf "%s-config" (include "frontend.fullname" .) }}
+          {{- end }}
+          {{- if and .Values.config.enabled .Values.config.files }}
+          volumeMounts:
+            - name: frontend-config-files
+              mountPath: /etc/config
+              readOnly: true
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if and .Values.config.enabled .Values.config.files }}
+      volumes:
+        - name: frontend-config-files
+          configMap:
+            name: {{ printf "%s-config" (include "frontend.fullname" .) }}
+      {{- end }}
