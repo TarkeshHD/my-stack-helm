@@ -1,111 +1,56 @@
-# Global configurations
 global:
-  imageRegistry: ""
-  imagePullSecrets: []
-  storageClass: ""
+  appName: my-stack
+  imagePullSecrets: []   # e.g., ["regcred"]
 
-# Frontend configuration
-frontend:
+ingress:
   enabled: true
-  replicaCount: 2
-  
+  className: nginx           # set to your ingress class (e.g., nginx)
+  host: my-stack.127.0.0.1.nip.io   # dev-friendly host; change for prod
+  tls:
+    enabled: false
+    secretName: ""           # e.g., "my-stack-tls"
+  frontendPath: /
+  backendPath: /api
+
+frontend:
   image:
-    repository: tarkesh/my-amplify-app
+    repository: ghcr.io/tarkeshhd/my-amplify-app
     tag: latest
     pullPolicy: IfNotPresent
-  
+  replicaCount: 2
   service:
     type: ClusterIP
     port: 80
-    targetPort: 3000
-  
-  ingress:
-    enabled: true
-    className: "nginx"
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-    hosts:
-      - host: my-app.local
-        paths:
-          - path: /
-            pathType: Prefix
-    tls: []
-  
+  containerPort: 80
   resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 250m
-      memory: 256Mi
-  
-  autoscaling:
-    enabled: false
-    minReplicas: 1
-    maxReplicas: 5
-    targetCPUUtilizationPercentage: 80
-  
-  env:
-    NODE_ENV: production
-    REACT_APP_API_URL: http://backend-service:8000
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "500m", memory: "256Mi" }
+  env: []
+  serviceAccount:
+    create: false
+    automount: false
+    annotations: {}
+    imagePullSecrets: []
 
-# Backend configuration
 backend:
-  enabled: true
-  replicaCount: 2
-  
   image:
-    repository: tarkesh/backend-automation
+    repository: ghcr.io/tarkeshhd/backend-automation
     tag: latest
     pullPolicy: IfNotPresent
-  
+  replicaCount: 2
   service:
     type: ClusterIP
-    port: 8000
-    targetPort: 8000
-  
-  ingress:
-    enabled: true
-    className: "nginx"
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-    hosts:
-      - host: api.my-app.local
-        paths:
-          - path: /api
-            pathType: Prefix
-    tls: []
-  
+    port: 8080
+  containerPort: 8080
   resources:
-    limits:
-      cpu: 1000m
-      memory: 1Gi
-    requests:
-      cpu: 500m
-      memory: 512Mi
-  
-  autoscaling:
-    enabled: false
-    minReplicas: 1
-    maxReplicas: 10
-    targetCPUUtilizationPercentage: 80
-  
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "1", memory: "512Mi" }
   env:
-    NODE_ENV: production
-    PORT: 8000
-    CORS_ORIGIN: http://my-app.local
-  
-  # Database configuration (if needed)
-  database:
-    enabled: false
-    host: ""
-    port: 5432
-    name: ""
-    username: ""
-    password: ""
-  
-  # Redis configuration (if needed)
-  redis:
-    enabled: false
-    host: ""
-    port: 6379
+    - name: NODE_ENV
+      value: "production"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    # targetMemoryUtilizationPercentage: 75
