@@ -1,14 +1,30 @@
 apiVersion: v2
 name: my-stack
-description: Umbrella chart for Frontend + Backend
+description: Umbrella chart for deploying frontend + backend together
 type: application
-version: 0.1.0
+version: 0.1.0        # chart version (bump when you change chart code)
+appVersion: "1.0.0"   # app version (informational)
+
+# Optional: limit supported K8s versions
+# kubeVersion: ">=1.22.0-0"
+
+# Optional metadata
+# home: https://example.com
+# sources:
+#   - https://github.com/TarkeshHD/my-amplify-app
+#   - https://github.com/TarkeshHD/backend-automation
+# keywords:
+#   - umbrella
+#   - frontend
+#   - backend
+# maintainers:
+#   - name: You
+#     email: you@example.com
+
 dependencies:
   - name: frontend
-    version: 0.1.0
-    repository: "file://./charts/frontend"
+    version: 0.1.0
+    repository: "file://./charts/frontend"
   - name: backend
-    version: 0.1.0
-    repository: "file://./charts/backend"
-
-
+    version: 0.1.0
+    repository: "file://./charts/backend"
