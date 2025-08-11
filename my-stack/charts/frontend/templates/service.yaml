@@ -4,9 +4,9 @@ metadata:
   name: {{ include "frontend.fullname" . }}
   labels: {{- include "frontend.labels" . | nindent 4 }}
 spec:
-  type: {{ $.Values.frontend.service.type }}
+  type: {{ .Values.service.type }}
   selector: {{- include "frontend.labels" . | nindent 4 }}
   ports:
     - name: http
-      port: {{ $.Values.frontend.service.port }}
-      targetPort: {{ $.Values.frontend.containerPort }}
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.containerPort }}
