@@ -1,8 +1,9 @@
-{{- if .Values.ingress.enabled -}}
+{{- if .Values.ingress.enabled }}
+{{- $fullName := include "frontend.fullname" . -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "frontend.fullname" . }}
+  name: {{ $fullName }}
   labels:
     {{- include "frontend.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
@@ -11,7 +12,7 @@ metadata:
   {{- end }}
 spec:
   {{- with .Values.ingress.className }}
-  ingressClassName: {{ . }}
+  ingressClassName: {{ . | quote }}
   {{- end }}
   {{- if .Values.ingress.tls }}
   tls:
@@ -20,7 +21,9 @@ spec:
         {{- range .hosts }}
         - {{ . | quote }}
         {{- end }}
-      secretName: {{ .secretName }}
+      {{- with .secretName }}
+      secretName: {{ . | quote }}
+      {{- end }}
     {{- end }}
   {{- end }}
   rules:
@@ -29,13 +32,11 @@ spec:
       http:
         paths:
           {{- range .paths }}
-          - path: {{ .path }}
-            {{- with .pathType }}
-            pathType: {{ . }}
-            {{- end }}
+          - path: {{ .path | quote }}
+            pathType: {{ default "Prefix" .pathType }}
             backend:
               service:
-                name: {{ include "frontend.fullname" $ }}
+                name: {{ $fullName }}
                 port:
                   number: {{ $.Values.service.port }}
           {{- end }}
