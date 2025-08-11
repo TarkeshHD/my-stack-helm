@@ -1,23 +1,5 @@
 apiVersion: v2
 name: backend
-description: Backend service for my-stack
+description: Backend API service
 type: application
-
-# Helm chart version (change when chart config changes)
 version: 0.1.0
-
-# App version (change when app image changes)
-appVersion: 1.0.0
-
-keywords:
-  - backend
-  - api
-  - my-stack
-
-home: https://github.com/TarkeshHD/backend-automation
-sources:
-  - https://github.com/TarkeshHD/backend-automation
-
-maintainers:
-  - name: TarkeshHD
-    email: tarkeshhd014@gmail.com
