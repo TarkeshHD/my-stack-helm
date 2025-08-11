@@ -10,37 +10,27 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "backend.fullname" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
-  {{- $cpu := .Values.autoscaling.targetCPUUtilizationPercentage }}
-  {{- $mem := .Values.autoscaling.targetMemoryUtilizationPercentage }}
+  minReplicas: {{ .Values.autoscaling.minReplicas | default 1 }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas | default 5 }}
+  {{- if or .Values.autoscaling.targetCPUUtilizationPercentage .Values.autoscaling.targetMemoryUtilizationPercentage }}
   metrics:
-    {{- if or $cpu $mem }}
-    {{- if $cpu }}
+    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: {{ $cpu }}
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
     {{- end }}
-    {{- if $mem }}
+    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: {{ $mem }}
+          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
     {{- end }}
-    {{- else }}
-    # Fallback so HPA remains valid if no metrics provided in values
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 80
-    {{- end }}
+  {{- end }}
   {{- with .Values.autoscaling.behavior }}
   behavior:
     {{- toYaml . | nindent 4 }}
