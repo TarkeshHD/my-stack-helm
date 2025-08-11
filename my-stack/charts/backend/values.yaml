@@ -1,128 +1,17 @@
-# Default values for backend.
-
 replicaCount: 1
-
 image:
-  # Change this to your backend image (e.g., ghcr.io/your-org/backend-automation)
-  repository: nginx
+  repository: backend
+  tag: latest
   pullPolicy: IfNotPresent
-  # If empty, Helm uses .Chart.AppVersion
-  tag: ""
-
-# Add secret names here if you pull from a private registry
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
-serviceAccount:
-  create: true
-  automount: true
-  annotations: {}
-  name: ""
-
-podAnnotations: {}
-podLabels: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop: [ "ALL" ]
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
 service:
   type: ClusterIP
   port: 8080
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
-  # - secretName: chart-example-tls
-  #   hosts:
-  #     - chart-example.local
-
+containerPort: 8080
 resources: {}
-  # limits:
-  #   cpu: 500m
-  #   memory: 512Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-# Probes (tweak path/ports as needed)
-livenessProbe:
-  httpGet:
-    path: /
-    port: http
-  initialDelaySeconds: 10
-  periodSeconds: 10
-  timeoutSeconds: 2
-  failureThreshold: 3
-
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
-  initialDelaySeconds: 5
-  periodSeconds: 10
-  timeoutSeconds: 2
-  failureThreshold: 3
-
-# Horizontal Pod Autoscaler (autoscaling/v2)
+env: []
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  # Set either/both. If neither is set, your HPA template should fall back (e.g., CPU 80%).
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-  # Optional v2 behavior block
-  # behavior:
-  #   scaleUp:
-  #     stabilizationWindowSeconds: 0
-  #     policies:
-  #       - type: Percent
-  #         value: 100
-  #         periodSeconds: 60
-  #   scaleDown:
-  #     stabilizationWindowSeconds: 300
-  #     policies:
-  #       - type: Percent
-  #         value: 50
-  #         periodSeconds: 60
-
-# Extra volumes / mounts
-volumes: []
-# - name: app-config
-#   configMap:
-#     name: backend-config
-
-volumeMounts: []
-# - name: app-config
-#   mountPath: /app/config
-#   readOnly: true
-
-# Optional env / envFrom patterns your Deployment template can consume
-env: []
-# - name: NODE_ENV
-#   value: "production"
-
-envFrom: []
-# - secretRef:
-#     name: backend-secrets
-# - configMapRef:
-#     name: backend-config
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  # targetMemoryUtilizationPercentage: 75
