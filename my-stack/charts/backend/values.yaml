@@ -9,6 +9,14 @@ service:
 containerPort: 8080
 resources: {}
 env: []
+
+# NEW: ConfigMap settings
+config:
+  enabled: true
+  data: {}   # e.g., { LOG_LEVEL: "info", FEATURE_X: "true" }
+  files: {}  # e.g., { appsettings.json: |-
+             #         { "port": 8080, "featureX": true } }
+
 autoscaling:
   enabled: false
   minReplicas: 2
