@@ -1,12 +1,19 @@
-{{- if .Values.config }}
+{{- $cmName := printf "%s-config" (include "backend.fullname" .) -}}
+{{- if and .Values.config.enabled (or (hasKey .Values.config "data") (hasKey .Values.config "files")) }}
+{{- if or .Values.config.data .Values.config.files }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "backend.fullname" . }}-config
+  name: {{ $cmName }}
   labels:
     {{- include "backend.labels" . | nindent 4 }}
 data:
-{{- range $key, $value := .Values.config }}
-  {{ $key }}: {{ $value | quote }}
+  {{- range $k, $v := .Values.config.data }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}
+  {{- range $fname, $contents := .Values.config.files }}
+  {{ $fname }}: |
+{{ tpl $contents $ | indent 4 }}
+  {{- end }}
 {{- end }}
 {{- end }}
