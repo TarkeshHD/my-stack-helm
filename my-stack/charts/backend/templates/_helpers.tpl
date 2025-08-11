@@ -1,41 +1,7 @@
-{{- if .Values.autoscaling.enabled }}
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: {{ include "backend.fullname" . }}-hpa
-  labels:
-    {{- include "backend.labels" . | nindent 4 }}
-  {{- with .Values.autoscaling.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: {{ include "backend.fullname" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
-  {{- /* Optional behavior block if provided */}}
-  {{- with .Values.autoscaling.behavior }}
-  behavior:
-    {{- toYaml . | nindent 2 }}
-  {{- end }}
-  metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-    {{- end }}
-    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    {{- end }}
-{{- end }}
+{{- define "backend.name" -}}backend{{- end -}}
+{{- define "backend.fullname" -}}{{ printf "%s-backend" .Release.Name | trunc 63 | trimSuffix "-" }}{{- end -}}
+{{- define "backend.labels" -}}
+app.kubernetes.io/name: {{ include "backend.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/part-of: {{ .Release.Name }}
+{{- end -}}
