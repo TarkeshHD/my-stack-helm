@@ -4,11 +4,11 @@ global:
 
 ingress:
   enabled: true
-  className: nginx           # set to your ingress class (e.g., nginx)
-  host: my-stack.127.0.0.1.nip.io   # dev-friendly host; change for prod
+  className: nginx
+  host: my-stack.127.0.0.1.nip.io
   tls:
     enabled: false
-    secretName: ""           # e.g., "my-stack-tls"
+    secretName: ""
   frontendPath: /
   backendPath: /api
 
@@ -26,11 +26,20 @@ frontend:
     requests: { cpu: "100m", memory: "128Mi" }
     limits:   { cpu: "500m", memory: "256Mi" }
   env: []
+  config:
+    enabled: false
+    data: {}
+    files: {}
   serviceAccount:
     create: false
     automount: false
     annotations: {}
     imagePullSecrets: []
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
 
 backend:
   image:
@@ -40,16 +49,26 @@ backend:
   replicaCount: 2
   service:
     type: ClusterIP
-    port: 8080
-  containerPort: 8080
+    port: 3000          # CHANGE if your app listens on a different port
+  containerPort: 3000   # CHANGE if your app listens on a different port
   resources:
     requests: { cpu: "100m", memory: "128Mi" }
     limits:   { cpu: "1", memory: "512Mi" }
   env:
     - name: NODE_ENV
       value: "production"
+    - name: PORT
+      value: "3000"     # keep in sync with containerPort/service.port
+  config:
+    enabled: false
+    data: {}
+    files: {}
+  secrets:
+    enabled: false
+    nameOverride: ""
+    data: {}            # e.g., MONGODB_URI: "mongodb://..."
   autoscaling:
-    enabled: true
+    enabled: false
     minReplicas: 2
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
