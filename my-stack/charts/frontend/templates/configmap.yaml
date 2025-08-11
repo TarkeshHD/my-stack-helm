@@ -6,7 +6,5 @@ metadata:
   labels:
     {{- include "frontend.labels" . | nindent 4 }}
 data:
-  {{- range $key, $value := .Values.config }}
-  {{ $key }}: {{ $value | quote }}
-  {{- end }}
+  {{- toYaml .Values.config | nindent 2 }}
 {{- end }}
