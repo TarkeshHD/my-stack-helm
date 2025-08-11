@@ -1,18 +1,12 @@
 apiVersion: v2
-name: my-full-stack-app
-description: A Helm umbrella chart for full-stack application with React frontend and Node.js backend
+name: my-stack
+description: Umbrella chart for Frontend + Backend
 type: application
-version: 1.0.0
-appVersion: "1.0.0"
-
+version: 0.1.0
 dependencies:
   - name: frontend
-    version: 1.0.0
-    condition: frontend.enabled
+    version: 0.1.0
+    repository: "file://./charts/frontend"
   - name: backend
-    version: 1.0.0
-    condition: backend.enabled
-
-maintainers:
-  - name: TarkeshHD
-    email: your-email@example.com
+    version: 0.1.0
+    repository: "file://./charts/backend"
